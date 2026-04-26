@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: ZyraPayments API Showcase
+  version: 1.0.0
+  description: Public-safe API contract for invoice lifecycle examples.
+paths:
+  /v1/invoices:
+    post:
+      summary: Create an invoice
+      security:
+        - MerchantApiKey: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceRequest"
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "409":
+          description: Idempotency conflict
+  /v1/invoices/{invoiceId}:
+    get:
+      summary: Get invoice status
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+components:
+  securitySchemes:
+    MerchantApiKey:
+      type: apiKey
+      in: header
+      name: x-merchant-api-key
+  schemas:
+    CreateInvoiceRequest:
+      type: object
+      required: [amount, currency, orderId]
+      properties:
+        amount:
+          type: number
+          minimum: 0.01
+        currency:
+          type: string
+          example: USD
+        orderId:
+          type: string
+    Invoice:
+      type: object
+      required: [id, orderId, amount, currency, state, expiresAt]
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        state:
+          type: string
+          enum: [draft, awaiting_payment, confirming, paid, expired]
+        expiresAt:
+          type: string
+          format: date-time
